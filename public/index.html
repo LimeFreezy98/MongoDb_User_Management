@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html> 
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>User_Management</title>
+    </head>
+
+    <body>
+        <h2>add User</h2>
+        <form action="/addUser" method="post">
+            <input type="text" name="firstName" placeholder="First Name"  />
+            <input type="text" name="lastName" placeholder="Last Name"  />
+             <input type="text" name="email" placeholder="email"  />
+            <input type="number" name="age" placeholder="Age"  />
+           
+
+            <button type="submit">Add User</button>
+        </form>
+
+        <h2> User List</h2>
+        <button onclick="loadUsers('asc')">Sort A → Z</button>
+    <button onclick="loadUsers('desc')">Sort Z → A</button>
+
+    <table>
+      <thead>
+        <tr>
+          <th>User ID</th>
+          <th>First Name</th>
+          <th>Last Name</th>
+          <th>Email</th>
+          <th>Age</th>
+        </tr>
+      </thead>
+      <tbody id="userTable"></tbody>
+    </table>
+
+    <script>
+      async function loadUsers(order = "asc") {
+        const response = await fetch(
+          `/users?sortBy=firstName&order=${order}`
+        );
+        const users = await response.json();
+
+        const table = document.getElementById("userTable");
+        table.innerHTML = "";
+
+        users.forEach((u) => {
+          const row = document.createElement("tr");
+
+          row.innerHTML = `
+            <td>${u.userID}</td>
+            <td>${u.firstName}</td>
+            <td>${u.lastName}</td>
+            <td>${u.email}</td>
+            <td>${u.age}</td>
+          `;
+
+          table.appendChild(row);
+        });
+      }
+
+      // Load users on page load (default ascending)
+      loadUsers();
+    </script>
+    </body>
+</html>
