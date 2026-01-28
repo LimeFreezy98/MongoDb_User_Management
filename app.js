@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 
-// mongodb 
+const dbURL = process.env.DB_URL || "mongodb://localhost/mtech"
 const app = express();
 const port = process.env.PORT || 3020;
 app.use(express.json());
@@ -49,25 +49,31 @@ app.post("/addUser", async (req, res) => {
     }
   });
 
-app.post('/editUser', async(req, res) => {
+  app.post("/editUser", async (req, res) => {
     try {
-        const { userID, ...updates } = req.body;
-    
-        const user = await User.findOneAndUpdate(
-          { userID },
-          updates,
-          { new: true }
-        );
-    
-        if (!user) {
-          return res.status(404).json({ message: "User not found" });
-        }
-    
-        res.json({ message: "User updated", user });
-      } catch (err) {
-        res.status(400).json({ error: err.message });
+      const { userID, firstName, lastName, email, age } = req.body;
+  
+      const user = await User.findOneAndUpdate(
+        { userID: Number(userID) },
+        {
+          firstName,
+          lastName,
+          email,
+          age: Number(age),
+        },
+        { new: true }
+      );
+  
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
       }
-})
+  
+      res.json({ message: "User updated", user });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+  
 
 app.post('/deleteUser', async (req, res) => {
     try {

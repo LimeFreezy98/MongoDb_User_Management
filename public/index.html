@@ -3,7 +3,9 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
         <title>User_Management</title>
+        <link rel="stylesheet" href="/styles.css">
     </head>
 
     <body>
@@ -18,10 +20,23 @@
             <button type="submit">Add User</button>
         </form>
 
+          <!-- sort -->
         <h2> User List</h2>
+
         <button onclick="loadUsers('asc')">Sort A → Z</button>
     <button onclick="loadUsers('desc')">Sort Z → A</button>
+  
+    <!-- search -->
+    <input
+    type="text"
+    id="searchInput"
+    placeholder="Search by first or last name"
+  />
+  <button onclick="searchUsers()">Search</button>
+  <button onclick="loadUsers()">Clear</button>
 
+  <br /><br />
+      
     <table>
       <thead>
         <tr>
@@ -34,34 +49,149 @@
       </thead>
       <tbody id="userTable"></tbody>
     </table>
-
+<!-- order -->
     <script>
-      async function loadUsers(order = "asc") {
-        const response = await fetch(
-          `/users?sortBy=firstName&order=${order}`
-        );
-        const users = await response.json();
+        async function loadUsers(order = "asc") {
+          const response = await fetch(
+            `/users?sortBy=firstName&order=${order}`
+          );
+          const users = await response.json();
+          renderUsers(users);
+        }
+    //   search
+        async function searchUsers() {
+          const q = document.getElementById("searchInput").value.trim();
+      
+          if (!q) {
+            loadUsers();
+            return;
+          }
+      
+          const response = await fetch(`/search?q=${q}`);
+          const users = await response.json();
+          renderUsers(users);
+        }
+      
+        function renderUsers(users) {
+          const table = document.getElementById("userTable");
+          table.innerHTML = "";
+      
+          users.forEach((u) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${u.userID}</td>
+              <td>
+                 <span id="fn-text-${u.userID}">${u.firstName}</span>
+                 <input id="fn-${u.userID}" value="${u.firstName}" style="display:none" />
+                </td>
+               
+                <td>
+                <span id="ln-text-${u.userID}">${u.lastName}</span>
+                <input id="ln-${u.userID}" value="${u.lastName}" style="display:none" />
+                
+              </td>
+    
+              <td>
+              <span id="em-text-${u.userID}">${u.email}</span>
+              <input id="em-${u.userID}" value="${u.email}" style="display:none" />
+             
+                </td>
 
-        const table = document.getElementById("userTable");
-        table.innerHTML = "";
+              <td>
+                 
+                <span id="ag-text-${u.userID}">${u.age}</span>
+                <input type="number" id="ag-${u.userID}" value="${u.age}" style="display:none" />
+                
+                </td>
 
-        users.forEach((u) => {
-          const row = document.createElement("tr");
+              <td>
+                <button id="edit-${u.userID}" onclick="editUser(${u.userID})">Edit</button>
+                <button id="save-${u.userID}" onclick="saveUser(${u.userID})" style="display:none">Save</button>
+                 <button id="cancel-${u.userID}" onclick="cancelEdit(${u.userID})" style="display:none">Cancel</button>
+                <button onclick="deleteUser(${u.userID})">Delete</button>
+              </td>
+               `;
+            table.appendChild(row);
+            
+          });
+        }
+      
 
-          row.innerHTML = `
-            <td>${u.userID}</td>
-            <td>${u.firstName}</td>
-            <td>${u.lastName}</td>
-            <td>${u.email}</td>
-            <td>${u.age}</td>
-          `;
+        
+        async function saveUser(userID) {
+          const data = {
+            userID,
+            firstName: document.getElementById(`fn-${userID}`).value,
+            lastName: document.getElementById(`ln-${userID}`).value,
+            email: document.getElementById(`em-${userID}`).value,
+            age: document.getElementById(`ag-${userID}`).value,
+          };
+    //   edit
+          await fetch("/editUser", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+      
+          loadUsers();
+        }
+    //  edit function
+    function editUser(userID) {
+        toggleRow(userID, true);
+    }
 
-          table.appendChild(row);
-        });
-      }
+    function cancelEdit(userID) {
+        document.getElementById(`fn-${userID}`).value =
+        document.getElementById(`fn-text-${userID}`).innerText;
 
-      // Load users on page load (default ascending)
-      loadUsers();
-    </script>
+        document.getElementById(`ln-${userID}`).value = 
+        document.getElementById(`ln-text-${userID}`).innerText;
+
+        document.getElementById(`em-${userID}`).value = 
+        document.getElementById(`em-text-${userID}`).innerText;
+
+        document.getElementById(`ag-${userID}`).value =
+        document.getElementById(`ag-text-${userID}`).innerText;
+
+        toggleRow(userID, false);
+    }
+
+    function toggleRow(userID, isEditing) {
+  const fields = ["fn", "ln", "em", "ag"];
+
+  fields.forEach((f) => {
+    document.getElementById(`${f}-${userID}`).style.display =
+      isEditing ? "inline" : "none";
+    document.getElementById(`${f}-text-${userID}`).style.display =
+      isEditing ? "none" : "inline";
+  });
+
+  document.getElementById(`edit-${userID}`).style.display =
+    isEditing ? "none" : "inline";
+  document.getElementById(`save-${userID}`).style.display =
+    isEditing ? "inline" : "none";
+  document.getElementById(`cancel-${userID}`).style.display =
+    isEditing ? "inline" : "none";
+}
+
+        
+// delete function
+
+        async function deleteUser(userID) {
+  if (!confirm("Delete this user?")) return;
+
+  await fetch("/deleteUser", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userID }),
+  });
+
+  loadUsers();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadUsers();
+});
+      </script>
     </body>
 </html>
