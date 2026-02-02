@@ -6,7 +6,7 @@ put dbURL of  mongodb atlas  url for server
 
 node --watch 
 
-
+npm run dev
 
 <!-- how to use -->
 
